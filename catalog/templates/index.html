@@ -20,5 +20,9 @@
         <li><strong>Genres:</strong> {{ num_genres }} </li>
         <li><strong>Books containing the word 'power':</strong> {{ num_books_with_word_power }} </li>
     </ul>
+    <h2>Dynamic content</h2>
+    <p>
+    You have visited this page {{ num_visits }} time{{ num_visits|pluralize }}.
+    </p>
 
 {% endblock %}
