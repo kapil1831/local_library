@@ -39,6 +39,16 @@
                {% endif %}
                 …
               </ul>
+              <ul class="sidebar-nav">
+                
+               {% if user.is_authenticated and user.is_staff %}
+                …
+                 <li>User: {{ user.get_username }}</li>
+                 <li><a href="{% url 'borrowed-books' %}">All Borrowed Books</a></li>
+                …
+               {% endif %}
+                
+              </ul>
             </ul>
           {% endblock %}
         </div>

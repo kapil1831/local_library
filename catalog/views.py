@@ -1,9 +1,29 @@
+from typing import Any
+from django.db.models.query import QuerySet
+from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from .models import Book, Author, BookInstance, Genre, Language
 
 from django.views import generic
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+
+
+from django.contrib.auth.mixins import AccessMixin
+
+class StaffRequiredMixin(AccessMixin):
+    """
+    Mixin that requires the user to be a staff member.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            # Optionally, redirect to a custom page or return a 403 response
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+    
+    def handle_no_permission(self):
+        return HttpResponseForbidden("You do not have permission to access this page.")
+
 
 # Create your views here.
 @login_required
@@ -67,3 +87,15 @@ class LoanedBooksByUserListView(LoginRequiredMixin, generic.ListView):
     
     def get_queryset(self):
         return BookInstance.objects.filter(borrower=self.request.user).filter(status__exact='o').order_by('due_back')
+    
+class BorrowedBooksListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
+    model = BookInstance
+    template_name = 'catalog/borrowed_books.html'
+    context_object_name = 'borrowed_books'
+    paginate_by = 5
+    
+    permission_required = 'catalog.can_mark_returned'
+    
+    
+    def get_queryset(self) -> QuerySet[Any]:
+        return BookInstance.objects.filter(status__exact='o').order_by('due_back')
