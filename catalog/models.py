@@ -3,6 +3,9 @@ from django.urls import reverse
 from django.db.models.constraints import UniqueConstraint
 from django.db.models.functions import Lower
 import uuid
+from django.conf import settings
+from datetime import date
+
 # Create your models here.
 
 class Genre(models.Model):
@@ -81,13 +84,20 @@ class BookInstance(models.Model):
         ('r', 'Reserved'),
     )   
     status = models.CharField(max_length=1, choices=LOAN_STATUS, blank=True, default='m', help_text='Book availability')
+    borrower = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
     class Meta:
         ordering = ['due_back']
+        permissions = (("can_mark_returned", "Set book as returned"),)
         
     def __str__(self) -> str:
         """ string for representing the Model object. """
         return f'{self.guid} ({self.book.title})'
+    
+    @property
+    def is_overdue(self):
+        """Determines if the book is overdue based on due date and current date."""
+        return bool(self.due_back and date.today() > self.due_back)
     
 class Author(models.Model):
     """ Model representing an author. """
@@ -102,7 +112,7 @@ class Author(models.Model):
     
     def get_absolute_url(self):
         """ Returns the url to access a particular author instance. """
-        return reverse("author-detail", kwargs={"id": self.id})
+        return reverse("author-detail", kwargs={"pk": self.pk})
     
     class Meta:
         ordering = ['last_name', 'first_name']
